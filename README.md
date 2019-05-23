@@ -1,4 +1,4 @@
-# Scripts for universe of genes project
+# Scripts for "Universe of Genes" project
 
 Code for running the analysis in our universe of genes project. Relevant scripts for different analytical steps are referenced in methods section of publication. Each directory has an individual README describing the function of each script.
 
