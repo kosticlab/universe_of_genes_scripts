@@ -1,0 +1,1173 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(cowplot)
+library(gridExtra)
+library(ggpubr)
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+clustersizes_oral=read.csv('cluster_size_data/95perc_cluster_sizes.csv')
+
+setwd('~/Dropbox (HMS)/orfletons/gut/')
+clustersizes_gut=read.csv('cluster_size_data/95perc_cluster_sizes.csv')
+
+clustersizes_igc=read.csv('~/Dropbox (HMS)/orfletons/revisions/igc_cluster_sizes_merged.csv')
+
+foo=merge(clustersizes_gut,clustersizes_oral,by='X',all = TRUE)
+
+foo[is.na(foo)]<-0
+
+ggplot(NULL) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,2]),fill='gut'), data = foo, alpha = 0.5) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,3]),fill='oral'), data = foo, alpha = 0.5)+theme(legend.position="bottom")+theme(legend.title=element_blank())+ xlab('Genes in Cluster') +ylab('log(Frequency)') + labs(title='Distribution of Gene Cluster Sizes, Nucleotides, 95% ID')
+
+pdf('~/Dropbox (HMS)//orfletons/combined/cluster_size_data/combined_clusters_95.pdf')
+ggplot(NULL) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,2]),fill='oral'), data = foo, alpha = 0.5) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,3]),fill='gut'), data = foo, alpha = 0.5)+theme(legend.position="bottom")+theme(legend.title=element_blank())+ xlab('Genes in Cluster') +ylab('log(Frequency)') + labs(title='Distribution of Gene Cluster Sizes, Nucleotides, 95% ID')
+dev.off()
+
+foo2=merge(clustersizes_gut,clustersizes_igc,by='X',all = TRUE)
+
+foo2[is.na(foo2)]<-0
+
+pdf('~/Dropbox (HMS)/orfletons/revisions/combined_clusters_with_metahit.pdf')
+ggplot(NULL) + geom_bar(stat='identity',aes(x=foo2[,1],y=log(foo2[,2]),fill='This study'), data = foo2, alpha = 0.5) + geom_bar(stat='identity',aes(x=foo2[,1],y=log(foo2[,3]),fill='IGC'), data = foo2, alpha = 0.5)+theme(legend.position="bottom")+theme(legend.title=element_blank())+ xlab('Genes in Cluster') +ylab('log(Frequency)') + labs(title='Distribution of Gut Cluster Sizes, IGC gene catalog vs. This Study')
+dev.off()
+
+```
+
+```{r}
+#plot metagenomic phylogeny output (modified raw output in excel beforehand)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+
+d1=t(read.csv('iterative_clustering/singleton_nonsingleton_iterative_clustering_for_plotting.csv',row.names=1,sep=','))
+d1=d1[,2:ncol(d1)]
+colnames(d1)=c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')
+d1=t(d1)
+d1=as.data.frame(d1)
+d1$perc_id=rownames(d1)
+d1=melt(d1)
+d1$perc_id <- factor(d1$perc_id, levels = (c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')))
+d1$body_site=rep('oral',nrow(d1))
+d1$data=paste(d1$variable,d1$body_site)
+
+setwd('~/Dropbox (HMS)/orfletons/gut')
+
+d2=t(read.csv('iterative_clustering/singleton_nonsingleton_iterative_clustering_for_plotting.csv',row.names=1,sep=','))
+d2=d2[,2:ncol(d2)]
+colnames(d2)=c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')
+d2=t(d2)
+d2=as.data.frame(d2)
+d2$perc_id=rownames(d2)
+d2=melt(d2)
+d2$perc_id <- factor(d2$perc_id, levels = (c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')))
+d2$body_site=rep('gut',nrow(d2))
+d2$data=paste(d2$variable,d2$body_site)
+
+d<-rbind(d1,d2)
+
+ggplot(data=d,aes(x=perc_id,colour=data,group=data)) + geom_line(aes(y=value))+scale_colour_brewer(palette="Paired")+xlab('Percent Identity') +ylab('Number of Clusters') + labs(title='Iterative Amino Acid Gene Catalog Construction')+labs(fill='Genes per cluster')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+
+ggsave(file = '~/Dropbox (HMS)/orfletons/combined/iterative_clustering/iterative_clustering.pdf', dpi = 600, width = 8, height = 6, units = "in")
+ggplot(data=d,aes(x=perc_id,colour=data,group=data)) + geom_line(aes(y=value))+scale_colour_brewer(palette="Paired")+xlab('Percent Identity') +ylab('Number of Clusters') + labs(title='Iterative Amino Acid Gene Catalog Construction')+labs(fill='Genes per cluster')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+dev.off()
+
+```
+```{r}
+#ratio plot
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+
+d1=t(read.csv('iterative_clustering/singleton_nonsingleton_iterative_clustering_for_plotting.csv',row.names=1,sep=','))
+d1=d1[,2:ncol(d1)]
+colnames(d1)=c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')
+d1=t(d1)
+d1=as.data.frame(d1)
+d1$`Singleton to Non-singleton Ratio`=d1[,1]/d1[,2]
+d1$perc_id=rownames(d1)
+d1=d1[,3:ncol(d1)]
+d1=melt(d1)
+d1$perc_id <- factor(d1$perc_id, levels = (c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')))
+d1$body_site=rep('oral',nrow(d1))
+
+setwd('~/Dropbox (HMS)/orfletons/gut')
+
+d2=t(read.csv('iterative_clustering/singleton_nonsingleton_iterative_clustering_for_plotting.csv',row.names=1,sep=','))
+d2=d2[,2:ncol(d2)]
+colnames(d2)=c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')
+d2=t(d2)
+d2=as.data.frame(d2)
+d2$`Singleton to Non-singleton Ratio`=d2[,1]/d2[,2]
+d2$perc_id=rownames(d2)
+d2=d2[,3:ncol(d2)]
+d2=melt(d2)
+d2$perc_id <- factor(d2$perc_id, levels = (c('100%','95%',"90%","85%","80%","75%","70%","65%","60%",'55%','50%')))
+d2$body_site=rep('gut',nrow(d2))
+
+d<-rbind(d1,d2)
+
+ggplot(data=d,aes(x=perc_id,colour=body_site,group=body_site)) + geom_line(aes(y=value))+xlab('Percent Identity') +ylab('Ratio of singleton to non-singleton genes') + labs(title='Iterative Amino Acid Gene Catalog Construction')+labs(fill='Genes per cluster')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+
+ggsave(file = '~/Dropbox (HMS)/orfletons/combined/iterative_clustering/iterative_clustering_ratios.pdf', dpi = 600, width = 8, height = 6, units = "in")
+ggplot(data=d,aes(x=perc_id,colour=body_site,group=body_site)) + geom_line(aes(y=value))+xlab('Percent Identity') +ylab('Ratio of singleton to non-singleton genes') + labs(title='Iterative Amino Acid Gene Catalog Construction')+labs(fill='Genes per cluster')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+dev.off()
+```
+
+
+
+```{r}
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+clustersizes_oral=read.csv('cluster_size_data/50perc_cluster_sizes.csv')
+
+setwd('~/Dropbox (HMS)/orfletons/gut/')
+clustersizes_gut=read.csv('cluster_size_data/50perc_cluster_sizes.csv')
+
+foo=merge(clustersizes_gut,clustersizes_oral,by='X',all = TRUE)
+
+foo[is.na(foo)]<-0
+
+ggplot(NULL) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,2]),fill='oral'), data = foo, alpha = 0.5) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,3]),fill='gut'), data = foo, alpha = 0.5)+theme(legend.position="bottom")+theme(legend.title=element_blank())+ xlab('Genes in Cluster') +ylab('log(Frequency)') + labs(title='Distribution of Gene Cluster Sizes, Amino Acids, 50% ID')
+
+pdf('~/Dropbox (HMS)/orfletons/combined/cluster_size_data/combined_clusters_50.pdf')
+ggplot(NULL) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,2]),fill='oral'), data = foo, alpha = 0.5) + geom_bar(stat='identity',aes(x=foo[,1],y=log(foo[,3]),fill='gut'), data = foo, alpha = 0.5)+theme(legend.position="bottom")+theme(legend.title=element_blank())+ xlab('Genes in Cluster') +ylab('log(Frequency)') + labs(title='Distribution of Gene Cluster Sizes, Amino Acids, 50% ID')
+dev.off()
+```
+
+
+```{r}
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n),na.rm = TRUE)
+  breaks[!duplicated(breaks)]
+}
+dff <- read.csv("./sorensen_dice/gene_catalog_sd_50perc.csv",sep=',',row.names=NULL,header=FALSE,check.names=FALSE)
+mat1 <- as.matrix(dff)
+mat <- na.omit(mat1)
+
+#histogram
+values1<-mat[lower.tri(mat, diag = FALSE)]
+values1=as.data.frame(values1)
+values1$name=rep('oral',nrow(values1))
+
+setwd('~/Dropbox (HMS)/orfletons/gut')
+
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n),na.rm = TRUE)
+  breaks[!duplicated(breaks)]
+}
+dff <- read.csv("./sorensen_dice/gene_catalog_sd_50perc.csv",sep=',',row.names=NULL,header=FALSE,check.names=FALSE)
+mat1 <- as.matrix(dff)
+mat <- na.omit(mat1)
+
+
+#histogram
+values2<-mat[lower.tri(mat, diag = FALSE)]
+values2=as.data.frame(values2)
+values2$name=rep('gut',nrow(values2))
+colnames(values2)[1]<-'values1'
+
+values<-rbind(values1,values2)
+
+pdf('~/Dropbox (HMS)/orfletons/combined/sorensen_dice/gene_overlay.pdf')
+ggplot() + geom_density(aes(x=values$values1, fill = values$name),alpha=.5)+xlab('Value')+ylab('Density')+labs(title='Distribution of Sorensen-Dice Values, Amino Acids, 50% ID')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+dev.off()
+
+ggplot() + geom_density(aes(x=values$values1, fill = values$name),alpha=.5)+xlab('Value')+ylab('Density')+labs(title='Distribution of Sorensen-Dice Values, Amino Acids, 50% ID')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+
+```
+
+```{r}
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n),na.rm = TRUE)
+  breaks[!duplicated(breaks)]
+}
+dff <- read.csv("./sorensen_dice/species_sorenson.csv",sep=',',row.names=NULL,header=FALSE,check.names=FALSE)
+mat1 <- as.matrix(dff)
+mat <- na.omit(mat1)
+
+#histogram
+values1<-mat[lower.tri(mat, diag = FALSE)]
+values1=as.data.frame(values1)
+values1$name=rep('oral',nrow(values1))
+
+setwd('~/Dropbox (HMS)/orfletons/gut')
+
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n),na.rm = TRUE)
+  breaks[!duplicated(breaks)]
+}
+dff <- read.csv("./sorensen_dice/species_sorenson.csv",sep=',',row.names=NULL,header=FALSE,check.names=FALSE)
+mat1 <- as.matrix(dff)
+mat <- na.omit(mat1)
+
+#histogram
+values2<-mat[lower.tri(mat, diag = FALSE)]
+values2=as.data.frame(values2)
+values2$name=rep('gut',nrow(values2))
+colnames(values2)[1]<-'values1'
+
+values<-rbind(values1,values2)
+
+pdf('~/Dropbox (HMS)/orfletons/combined/sorensen_dice/species_overlay.pdf')
+ggplot() + geom_density(aes(x=values$values1, fill = values$name),alpha=.5)+xlab('Value')+ylab('Density')+labs(title='Sorensen-Dice Values, Species-Level')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+dev.off()
+
+ggplot() + geom_density(aes(x=values$values1, fill = values$name),alpha=.5)+xlab('Value')+ylab('Density')+labs(title='Sorensen-Dice Values, Species-Level')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+
+```
+
+
+
+```{r}
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n),na.rm = TRUE)
+  breaks[!duplicated(breaks)]
+}
+dff <- read.csv("./sorensen_dice/gene_catalog_sd_minpath_50.csv",sep=',',row.names=NULL,header=FALSE,check.names=FALSE)
+dff <- dff[,-(1),drop=FALSE] 
+mat1 <- as.matrix(dff)
+mat <- na.omit(mat1)
+
+#histogram
+values1<-mat[lower.tri(mat, diag = FALSE)]
+values1=as.data.frame(values1)
+values1$name=rep('oral',nrow(values1))
+
+setwd('~/Dropbox (HMS)/orfletons/gut')
+
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n),na.rm = TRUE)
+  breaks[!duplicated(breaks)]
+}
+dff <- read.csv("./sorensen_dice/gene_catalog_sd_minpath_50.csv",sep=',',row.names=NULL,header=FALSE,check.names=FALSE)
+mat1 <- as.matrix(dff)
+mat <- na.omit(mat1)
+
+#histogram
+values2<-mat[lower.tri(mat, diag = FALSE)]
+values2=as.data.frame(values2)
+values2$name=rep('gut',nrow(values2))
+colnames(values2)[1]<-'values1'
+
+values<-rbind(values1,values2)
+
+pdf('~/Dropbox (HMS)//orfletons/combined/sorensen_dice/minpath_overlay.pdf')
+ggplot() + geom_density(aes(x=values$values1, fill = values$name),alpha=.5)+xlab('Value')+ylab('Density')+labs(title='Sorensen-Dice Distribution, MinPath Annotations, 50% ID')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+dev.off()
+
+ggplot() + geom_density(aes(x=values$values1, fill = values$name),alpha=.5)+xlab('Value')+ylab('Density')+labs(title='Sorensen-Dice Distribution, MinPath Annotations, 50% ID')+theme(legend.position="bottom")+theme(legend.title=element_blank())
+
+```
+
+```{r}
+library(RColorBrewer)
+library(reshape2)
+setwd('~/Dropbox (HMS)//orfletons/')#count number of functional annotations in singletons vs non-singletons
+mapN<-read.csv('total_annotation_non_singletons.csv',sep=',',stringsAsFactors = F)
+colnames(mapN)<-c('names','Gut Non-Singletons','Oral Non-Singletons')
+
+mapS<-read.csv('total_annotations_singletons.csv',sep=',',stringsAsFactors = F)
+colnames(mapS)<-c('names','Gut Singletons','Oral Singletons')
+
+mapS[3,2]=mapS[3,2]-mapS[1,2]
+mapS[3,3]=mapS[3,3]-mapS[1,3]
+
+mapN[3,2]=mapN[3,2]-mapN[1,2]
+mapN[3,3]=mapN[3,3]-mapN[1,3]
+
+mapS$names<-c('Has pathway annotation','Has no annotation','Has non-pathway annotation')
+mapN$names<-c('Has pathway annotation','Has no annotation','Has non-pathway annotation')
+
+mapS[3,2]/sum(mapS[,2])
+mapS[3,3]/sum(mapS[,3])
+
+mapN[3,2]/sum(mapN[,2])
+mapN[3,3]/sum(mapN[,3])
+
+mapS[,2]=mapS[,2]/sum(mapS[,2])
+mapS[,3]=mapS[,3]/sum(mapS[,3])
+
+mapN[,2]=mapN[,2]/sum(mapN[,2])
+mapN[,3]=mapN[,3]/sum(mapN[,3])
+
+mapS<-melt(mapS)
+mapN<-melt(mapN)
+
+pdf('total_annotations_s.pdf')
+ggplot(data=mapS,aes(x=names,y=value,fill=variable))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[3:4])+labs(title='Functional Annotations, Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)
+dev.off()
+
+pdf('total_annotations_ns.pdf')
+ggplot(data=mapN,aes(x=names,y=value,fill=variable))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[1:2])+labs(title='Functional Annotations, Non-Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)
+dev.off()
+  
+ggplot(data=mapS,aes(x=names,y=value,fill=variable))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[3:4])+labs(title='Functional Annotations, Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)
+ggplot(data=mapN,aes(x=names,y=value,fill=variable))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[1:2])+labs(title='Functional Annotations, Non-Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)
+
+```
+
+```{r}
+#count number of taxonomic annotations in singletons vs non-singletons
+setwd('~/Dropbox (HMS)/orfletons/oral')
+taxamap<-read.csv('taxonomy_annotations/gene_catalog_nton_taxa_counts_50perc.tsv',sep='\t')
+colnames(taxamap)<-c('taxa','Non_Singleton_Counts','Singleton_Counts')
+
+totalNS=sum(taxamap[,2])
+totalS=sum(taxamap[,3])
+
+taxamapno=taxamap[taxamap$taxa=="0", ]
+taxamap=taxamap[taxamap$taxa!="0", ]
+
+nsAn=sum(taxamap[1:nrow(taxamap),2])/totalNS
+sdNSAn=sdNS/sum(taxamap[1:nrow(taxamap),2])
+nsNoAn=taxamapno[1,2]/totalNS
+sdNSNoAn=sdNS/taxamapno[1,2]
+sAn=sum(taxamap[1:nrow(taxamap),3])/totalS
+sdSAn=sdS/sum(taxamap[1:nrow(taxamap),3])
+sNoAn=taxamapno[1,3]/totalS
+sdSNoAn=sdS/taxamapno[1,3]
+
+annotationPlotData1 = data.frame(y=c(nsAn,nsNoAn), x=c('Annotated','Non-annotated'),z=c('Oral Singletons','Oral Singletons'),sd=c(sdNSAn,sdNSNoAn))
+annotationPlotData2 = data.frame(y=c(sAn,sNoAn), x=c('Annotated','Non-annotated'),z=c('Oral Non-Singletons','Oral Non-Singletons'),sd=c(sdSAn,sdSNoAn))
+
+#####
+#annotated vs unannotated ORFs, taxa
+setwd('~/Dropbox (HMS)/orfletons/gut')
+#count number of functional annotations in singletons vs non-singletons
+taxamap<-read.csv('taxonomy_annotations/gene_catalog_nton_taxa_counts_50perc.tsv',sep='\t')
+colnames(taxamap)<-c('taxa','Non_Singleton_Counts','Singleton_Counts')
+
+totalNS=sum(taxamap[,2])
+totalS=sum(taxamap[,3])
+
+sdNS=sd(taxamap[,2])
+sdS=sd(taxamap[,3])
+
+taxamapno=taxamap[taxamap$taxa=="0", ]
+taxamap=taxamap[taxamap$taxa!="0", ]
+
+nsAn=sum(taxamap[1:nrow(taxamap),2])/totalNS
+sdNSAn=sdNS/sum(taxamap[1:nrow(taxamap),2])
+nsNoAn=taxamapno[1,2]/totalNS
+sdNSNoAn=sdNS/taxamapno[1,2]
+sAn=sum(taxamap[1:nrow(taxamap),3])/totalS
+sdSAn=sdS/sum(taxamap[1:nrow(taxamap),3])
+sNoAn=taxamapno[1,3]/totalS
+sdSNoAn=sdS/taxamapno[1,3]
+
+annotationPlotData11 = data.frame(y=c(nsAn,nsNoAn), x=c('Annotated','Non-annotated'),z=c('Gut Singletons','Gut Singletons'),sd=c(sdNSAn,sdNSNoAn))
+annotationPlotData22 = data.frame(y=c(sAn,sNoAn), x=c('Annotated','Non-annotated'),z=c('Gut Non-Singletons','Gut Non-Singletons'),sd=c(sdSAn,sdSNoAn))
+
+mapS=rbind(annotationPlotData11,annotationPlotData1)
+mapN=rbind(annotationPlotData22,annotationPlotData2)
+setwd('~/Dropbox (HMS)/orfletons/')
+ggplot(data=mapS,aes(x=x,y=y,fill=z))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[3:4])+labs(title='Taxonomic Annotations, Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)
+ggplot(data=mapN,aes(x=x,y=y,fill=z))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[1:2])+labs(title='Functional Annotations, Non-Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)
+
+pdf('total_annotations_taxa_s.pdf')
+ggplot(data=mapS,aes(x=x,y=y,fill=z))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[3:4])+labs(title='Taxonomic Annotations, Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)#+geom_errorbar(aes(ymin=y-sd, ymax=y+sd), width=.5, position=position_dodge(.9)) 
+dev.off()
+
+pdf('total_annotations_taxa_ns.pdf')
+ggplot(data=mapN,aes(x=x,y=y,fill=z))+geom_bar(stat='identity',position='dodge')+scale_fill_manual(values=brewer.pal(name='Paired',n=4)[1:2])+labs(title='Taxonomic Annotations, Non-Singletons',fill='')+theme(axis.title.x=element_blank())+theme(axis.title.y=element_blank())+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)#+geom_errorbar(aes(ymin=y-sd, ymax=y+sd), width=.5, position=position_dodge(.9)) 
+dev.off()
+
+```
+
+
+```{r}
+#singleton vs non-singleton contigs binned by taxa where each contig had to have at LEAST 2 genes
+fish<-function(count_sings,count_nonsings,total_sings,total_nonsings){
+  out<-fisher.test(matrix(c(count_sings,count_nonsings,total_sings,total_nonsings),nrow=2,ncol=2))
+  return(c(out$p.value,out$estimate,out$conf.int[1],out$conf.int[2]))
+} 
+
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+
+binnedcontigs<-read.csv('taxonomy_annotations/gene_catalog_binned_contig_data_singleton_1_count.csv',sep='\t',row.names = 1)
+binnedcontigsns<-read.csv('taxonomy_annotations/gene_catalog_binned_contig_data_non_singleton_1_count.csv',sep='\t',row.names = 1)
+contigtaxabin=merge(binnedcontigs, binnedcontigsns, all=TRUE,by='row.names')
+contigtaxabin[is.na(contigtaxabin)] <- 0
+colnames(contigtaxabin)<-c('Taxonomic_Annotation','Singleton_Counts','Non_Singleton_Counts')
+contigtaxabin$Normalized_Non_Singleton_Counts<-contigtaxabin$Non_Singleton_Counts#/sum(contigtaxabin$Non_Singleton_Counts)
+contigtaxabin$Normalized_Singleton_Counts<-contigtaxabin$Singleton_Counts#/sum(contigtaxabin$Singleton_Counts)
+contigtaxabin[,2]<-contigtaxabin[,2]+1
+contigtaxabin[,3]<-contigtaxabin[,3]+1
+
+totalS=sum(contigtaxabin$Singleton_Counts)
+totalN=sum(contigtaxabin$Non_Singleton_Counts)
+
+output=matrix(nrow = nrow(contigtaxabin), ncol = 4)
+for (i in 1:nrow(contigtaxabin)){
+  output[i,]=fish(contigtaxabin[i,2],contigtaxabin[i,3],totalS,totalN)
+}
+
+contigtaxabin<-cbind(contigtaxabin,output)
+
+setwd('~/Dropbox (HMS)/orfletons/gut/')
+
+binnedcontigs<-read.csv('taxonomy_annotations/gene_catalog_binned_contig_data_singleton_1_count.csv',sep='\t',row.names = 1)
+binnedcontigsns<-read.csv('taxonomy_annotations/gene_catalog_binned_contig_data_non_singleton_1_count.csv',sep='\t',row.names = 1)
+contigtaxabin1=merge(binnedcontigs, binnedcontigsns, all=TRUE,by='row.names')
+contigtaxabin1[is.na(contigtaxabin1)] <- 0 
+colnames(contigtaxabin1)<-c('Taxonomic_Annotation','Singleton_Counts','Non_Singleton_Counts')
+contigtaxabin1$Normalized_Non_Singleton_Counts<-contigtaxabin1$Non_Singleton_Counts#/sum(contigtaxabin1$Non_Singleton_Counts)
+contigtaxabin1$Normalized_Singleton_Counts<-contigtaxabin1$Singleton_Counts#/sum(contigtaxabin1$Singleton_Counts)
+contigtaxabin1[,2]<-contigtaxabin1[,2]+1
+contigtaxabin1[,3]<-contigtaxabin1[,3]+1
+
+totalS=sum(contigtaxabin1$Singleton_Counts)
+totalN=sum(contigtaxabin1$Non_Singleton_Counts)
+
+output=matrix(nrow = nrow(contigtaxabin1), ncol = 4)
+for (i in 1:nrow(contigtaxabin1)){
+  output[i,]=fish(contigtaxabin1[i,2],contigtaxabin1[i,3],totalS,totalN)
+}
+
+contigtaxabin1<-cbind(contigtaxabin1,output)
+
+colnames(contigtaxabin)[6:9]<-c('p_value','odds_ratio','conf_int_lower','conf_int_higher')
+colnames(contigtaxabin1)[6:9]<-c('p_value','odds_ratio','conf_int_lower','conf_int_higher')
+
+contigtaxabin$p_value_adjusted<-p.adjust(contigtaxabin$p_value,method='BY')
+contigtaxabin1$p_value_adjusted<-p.adjust(contigtaxabin1$p_value,method='BY')
+
+seo<-contigtaxabin[which(contigtaxabin$odds_ratio>1 & contigtaxabin$p_value_adjusted<.05),]
+nseo<-contigtaxabin[which(contigtaxabin$odds_ratio<1 & contigtaxabin$p_value_adjusted<.05),]
+seg<-contigtaxabin1[which(contigtaxabin1$odds_ratio>1 & contigtaxabin1$p_value_adjusted<.05),]
+nseg<-contigtaxabin1[which(contigtaxabin1$odds_ratio<1 & contigtaxabin1$p_value_adjusted<.05),]
+
+nseo$odds_ratio<-1/nseo$odds_ratio
+nseg$odds_ratio<-1/nseg$odds_ratio
+nseo$conf_int_lower<-1/nseo$conf_int_lower
+nseg$conf_int_lower<-1/nseg$conf_int_lower
+nseo$conf_int_higher<-1/nseo$conf_int_higher
+nseg$conf_int_higher<-1/nseg$conf_int_higher
+
+colnames(nseg)[8:9]<-c('conf_int_higher','conf_int_lower')
+colnames(nseo)[8:9]<-c('conf_int_higher','conf_int_lower')
+
+seo$log_odds_ratio<-log(seo$odds_ratio,10)
+nseo$log_odds_ratio<-log(nseo$odds_ratio,10)
+seg$log_odds_ratio<-log(seg$odds_ratio,10)
+nseg$log_odds_ratio<-log(nseg$odds_ratio,10)
+
+seo$log_conf_lower<-log(seo$conf_int_lower,10)
+nseo$log_conf_lower<-log(nseo$conf_int_lower,10)
+seg$log_conf_lower<-log(seg$conf_int_lower,10)
+nseg$log_conf_lower<-log(nseg$conf_int_lower,10)
+
+seo$log_conf_higher<-log(seo$conf_int_higher,10)
+nseo$log_conf_higher<-log(nseo$conf_int_higher,10)
+seg$log_conf_higher<-log(seg$conf_int_higher,10)
+nseg$log_conf_higher<-log(nseg$conf_int_higher,10)
+
+write.csv(seg,'~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/seg.csv')
+write.csv(nseg,'~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/nseg.csv')
+write.csv(seo,'~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/seo.csv')
+write.csv(nseo,'~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/nseo.csv')
+
+
+ggplot() + geom_point(data=contigtaxabin, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='oral'))+ geom_point(data=contigtaxabin1, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='gut')) +labs(title="Taxonomic bins of singleton and non-singleton contigs (with at least 2 genes)") +geom_abline(slope=1, intercept=0)+ scale_x_continuous(limits=c(-20,0))+ scale_y_continuous(limits=c(-20,0))+theme(legend.position="bottom")+theme(legend.title=element_blank())+ ylab('ln(Normalized non-singleton counts)')+xlab('ln(Normalized singleton counts)')
+ggsave('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/taxa_relationship_combined.pdf',width = 10,height=10)
+
+ggplot() + geom_point(data=contigtaxabin, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='oral'))+ geom_point(data=contigtaxabin1, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='gut')) +labs(title="Taxonomic bins of singleton and non-singleton contigs") +geom_abline(slope=1, intercept=0)+theme(legend.position="bottom")+theme(legend.title=element_blank())
+
+```
+
+#manually then go into the seg, seo, nseo, and nseg output files to take only top 25
+```{r}
+#top 25 plots, species
+seg=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/seg_forplot.csv')
+seg=seg[order(seg$log_odds_ratio,decreasing = T),]
+nseg=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/nseg_forplot.csv')
+nseg=nseg[order(nseg$log_odds_ratio,decreasing = T),]
+seo=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/seo_forplot.csv')
+seo=seo[order(seo$log_odds_ratio,decreasing = T),]
+nseo=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/nseo_forplot.csv')
+nseo=nseo[order(nseo$log_odds_ratio,decreasing = T),]
+
+seo$Taxonomic_Annotation <- factor(seo$Taxonomic_Annotation, levels = rev(seo$Taxonomic_Annotation))
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_seo.pdf')
+ggplot(data=seo,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for oral singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+
+nseo$Taxonomic_Annotation <- factor(nseo$Taxonomic_Annotation, levels = rev(nseo$Taxonomic_Annotation))
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_nseo.pdf')
+ggplot(data=nseo,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for oral non-singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+
+seg$Taxonomic_Annotation <- factor(seg$Taxonomic_Annotation, levels = rev(seg$Taxonomic_Annotation))
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_seg.pdf')
+ggplot(data=seg,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for gut singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+
+nseg$Taxonomic_Annotation <- factor(nseg$Taxonomic_Annotation, levels = rev(nseg$Taxonomic_Annotation))
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_nseg.pdf')
+ggplot(data=nseg,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for gut non-singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+###
+
+a<-ggplot(data=seo,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for oral singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+b<-ggplot(data=nseo,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for oral non-singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+c<-ggplot(data=seg,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for gut singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+d<-ggplot(data=nseg,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched species for gut non-singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+ga <- ggplotGrob(a)
+gb <- ggplotGrob(b)
+gc <- ggplotGrob(c)
+gd <- ggplotGrob(d)
+
+both4<-align_plots(a,b,c,d,align = 'hv',axis = 'l')
+a<-ggdraw(both4[[1]])
+b<-ggdraw(both4[[2]])
+c<-ggdraw(both4[[3]])
+d<-ggdraw(both4[[4]])
+
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_taxa_grid_species.pdf',width=20,height=15)
+grid.arrange(a, b, c, d ,nrow = 2)
+dev.off()
+
+png('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_taxa_grid_species.png')
+grid.arrange(a, b, c, d ,nrow = 2)
+dev.off()
+
+```
+
+```{r}
+#top 10 plots, genus
+seg=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/seg_forplot_genus.csv')
+seg=seg[order(seg$log_odds_ratio,decreasing = T),]
+nseg=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/nseg_forplot_genus.csv')
+nseg=nseg[order(nseg$log_odds_ratio,decreasing = T),]
+seo=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/seo_forplot_genus.csv')
+seo=seo[order(seo$log_odds_ratio,decreasing = T),]
+nseo=read.csv('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/nseo_forplot_genus.csv')
+nseo=nseo[order(nseo$log_odds_ratio,decreasing = T),]
+
+seo$Taxonomic_Annotation <- factor(seo$Taxonomic_Annotation, levels = rev(seo$Taxonomic_Annotation))
+nseo$Taxonomic_Annotation <- factor(nseo$Taxonomic_Annotation, levels = rev(nseo$Taxonomic_Annotation))
+seg$Taxonomic_Annotation <- factor(seg$Taxonomic_Annotation, levels = rev(seg$Taxonomic_Annotation))
+nseg$Taxonomic_Annotation <- factor(nseg$Taxonomic_Annotation, levels = rev(nseg$Taxonomic_Annotation))
+
+a<-ggplot(data=seo,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 10 most enriched genera for oral singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+b<-ggplot(data=nseo,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 10 most enriched genera for oral non-singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+c<-ggplot(data=seg,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 10 most enriched genera for oral singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+d<-ggplot(data=nseg,aes(x=Taxonomic_Annotation,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 10 most enriched genera for gut non-singleton contigs')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=12))+geom_errorbar(aes(x=Taxonomic_Annotation, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_seo_genus.pdf')
+a
+dev.off()
+
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_nseo_genus.pdf')
+b
+dev.off()
+
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_seg_genus.pdf')
+c
+dev.off()
+
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_functions_nseg_genus.pdf')
+d
+dev.off()
+###
+
+ga <- ggplotGrob(a)
+gb <- ggplotGrob(b)
+gc <- ggplotGrob(c)
+gd <- ggplotGrob(d)
+
+both4<-align_plots(a,b,c,d,align = 'hv',axis = 'l')
+a<-ggdraw(both4[[1]])
+b<-ggdraw(both4[[2]])
+c<-ggdraw(both4[[3]])
+d<-ggdraw(both4[[4]])
+
+pdf('~/Dropbox (HMS)/orfletons/combined/taxonomy_annotations/top_taxa_grid_genus.pdf',width=20,height=15)
+grid.arrange(a, b, c, d ,nrow = 2)
+dev.off()
+
+```
+
+
+```{r}
+#functional analysis
+#load dictionary mapping data
+setwd('~/Dropbox (HMS)/orfletons/combined/')
+biocycDict=read.csv('biocyc_rename.txt',sep='\t',row.names=1,stringsAsFactors = F)
+minpathDict=read.csv('functional_annotations/minpathmap',sep=' ',header=F,row.names=1,stringsAsFactors = F)
+
+fish<-function(count_sings,count_nonsings,total_sings,total_nonsings){
+  out<-fisher.test(matrix(c(count_sings,count_nonsings,total_sings,total_nonsings),nrow=2,ncol=2))
+  return(c(out$p.value,out$estimate,out$conf.int[1],out$conf.int[2]))
+} 
+
+setwd('~/Dropbox (HMS)/orfletons/oral')
+minmap<-read.csv('functional_annotations/gene_catalog_minpath_nton_counts_50perc.tsv',sep='\t')
+minmap[,2]<-minmap[,2]+1
+minmap[,3]<-minmap[,3]+1
+colnames(minmap)<-c('pathway','Non_Singleton_Counts','Singleton_Counts')
+minmap$Normalized_Non_Singleton_Counts<-minmap$Non_Singleton_Counts/sum(minmap$Non_Singleton_Counts)
+minmap$Normalized_Singleton_Counts<-minmap$Singleton_Counts/sum(minmap$Singleton_Counts)
+
+totalN=sum(minmap$Non_Singleton_Counts)
+totalS=sum(minmap$Singleton_Counts)
+
+output=matrix(nrow = nrow(minmap), ncol = 4)
+for (i in 1:nrow(minmap)){
+  output[i,]=fish(minmap[i,3],minmap[i,2],totalS,totalN)
+}
+
+minmap=cbind(minmap,output)
+
+setwd('~/Dropbox (HMS)/orfletons/gut')
+minmap1<-read.csv('functional_annotations/gene_catalog_minpath_nton_counts_50perc.tsv',sep='\t')
+colnames(minmap1)<-c('pathway','Non_Singleton_Counts','Singleton_Counts')
+minmap1[,2]<-minmap1[,2]+1
+minmap1[,3]<-minmap1[,3]+1
+minmap1$Normalized_Non_Singleton_Counts<-minmap1$Non_Singleton_Counts/sum(minmap1$Non_Singleton_Counts)
+minmap1$Normalized_Singleton_Counts<-minmap1$Singleton_Counts/sum(minmap1$Singleton_Counts)
+
+totalN=sum(minmap1$Non_Singleton_Counts)
+totalS=sum(minmap1$Singleton_Counts)
+
+output=matrix(nrow = nrow(minmap1), ncol = 4)
+for (i in 1:nrow(minmap1)){
+  output[i,]=fish(minmap1[i,3],minmap1[i,2],totalS,totalN)
+}
+
+ggplot() + geom_point(data=minmap, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='oral'))+geom_point(data=minmap1, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='gut')) +labs(title="Singletons and non-singletons, minpath, amino acids, 50% ID")+scale_x_continuous(limits = c(-20, 0))+scale_y_continuous(limits = c(-20, 0))+geom_abline(slope=1, intercept=0)+theme(legend.position="bottom")+theme(legend.title=element_blank())
+
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/minpath_combined_50perc.pdf')
+ggplot() + geom_point(data=minmap, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='oral'))+geom_point(data=minmap1, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='gut')) +labs(title="Singletons and non-singletons, minpath, amino acids, 50% ID")+scale_x_continuous(limits = c(-20, 0))+scale_y_continuous(limits = c(-20, 0))+geom_abline(slope=1, intercept=0)+theme(legend.position="bottom")+theme(legend.title=element_blank())
+dev.off()
+
+minmap1=cbind(minmap1,output)
+
+colnames(minmap)[6:9]<-c('p_value','odds_ratio','conf_int_lower','conf_int_higher')
+colnames(minmap1)[6:9]<-c('p_value','odds_ratio','conf_int_lower','conf_int_higher')
+
+minmap$p_value_adjusted<-p.adjust(minmap$p_value,method='BY')
+minmap1$p_value_adjusted<-p.adjust(minmap1$p_value,method='BY')
+
+seo<-minmap[which(minmap$odds_ratio>1 & minmap$p_value_adjusted<.05),]
+seo<-seo[order(seo$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(seo), ncol = 1)
+for (i in 1:nrow(seo)){
+  temp=biocycDict[minpathDict[as.character(seo$pathway[i]),][1],2]
+  if(is.na(temp)==TRUE){
+    foo[i]=minpathDict[as.character(seo$pathway[i]),][1]
+  } else{
+    foo[i]=temp
+  }
+}
+seo$names=foo
+
+nseo<-minmap[which(minmap$odds_ratio<1 & minmap$p_value_adjusted<.05),]
+nseo<-nseo[order(nseo$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(nseo), ncol = 1)
+for (i in 1:nrow(nseo)){
+  temp=biocycDict[minpathDict[as.character(nseo$pathway[i]),][1],2]
+  if(is.na(temp)==TRUE){
+    foo[i]=minpathDict[as.character(nseo$pathway[i]),][1]
+  } else{
+    foo[i]=temp
+  }
+}
+nseo$names=foo
+
+seg<-minmap1[which(minmap1$odds_ratio>1 & minmap1$p_value_adjusted<.05),]
+seg<-seg[order(seg$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(seg), ncol = 1)
+for (i in 1:nrow(seg)){
+  temp=biocycDict[minpathDict[as.character(seg$pathway[i]),][1],2]
+  if(is.na(temp)==TRUE){
+    foo[i]=minpathDict[as.character(seg$pathway[i]),][1]
+  } else{
+    foo[i]=temp
+  }
+}
+seg$names=foo
+
+nseg<-minmap1[which(minmap1$odds_ratio<1 & minmap1$p_value_adjusted<.05),]
+nseg<-nseg[order(nseg$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(nseg), ncol = 1)
+for (i in 1:nrow(nseg)){
+  temp=biocycDict[minpathDict[as.character(nseg$pathway[i]),][1],2]
+  if(is.na(temp)==TRUE){
+    foo[i]=minpathDict[as.character(nseg$pathway[i]),][1]
+  } else{
+    foo[i]=temp
+  }
+}
+nseg$names=foo
+
+nseo$odds_ratio<-1/nseo$odds_ratio
+nseg$odds_ratio<-1/nseg$odds_ratio
+nseo$conf_int_lower<-1/nseo$conf_int_lower
+nseg$conf_int_lower<-1/nseg$conf_int_lower
+nseo$conf_int_higher<-1/nseo$conf_int_higher
+nseg$conf_int_higher<-1/nseg$conf_int_higher
+
+colnames(nseg)[8:9]<-c('conf_int_higher','conf_int_lower')
+colnames(nseo)[8:9]<-c('conf_int_higher','conf_int_lower')
+
+seo$log_odds_ratio<-log(seo$odds_ratio,10)
+nseo$log_odds_ratio<-log(nseo$odds_ratio,10)
+seg$log_odds_ratio<-log(seg$odds_ratio,10)
+nseg$log_odds_ratio<-log(nseg$odds_ratio,10)
+
+seo$log_conf_lower<-log(seo$conf_int_lower,10)
+nseo$log_conf_lower<-log(nseo$conf_int_lower,10)
+seg$log_conf_lower<-log(seg$conf_int_lower,10)
+nseg$log_conf_lower<-log(nseg$conf_int_lower,10)
+
+seo$log_conf_higher<-log(seo$conf_int_higher,10)
+nseo$log_conf_higher<-log(nseo$conf_int_higher,10)
+seg$log_conf_higher<-log(seg$conf_int_higher,10)
+nseg$log_conf_higher<-log(nseg$conf_int_higher,10)
+
+
+write.csv(seg,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/seg.csv')
+write.csv(nseg,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseg.csv')
+write.csv(seo,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/seo.csv')
+write.csv(nseo,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseo.csv')
+
+seo<-minmap[which(minmap$odds_ratio>1 & minmap$p_value_adjusted<.05),]$pathway
+nseo<-minmap[which(minmap$odds_ratio<1 & minmap$p_value_adjusted<.05),]$pathway
+seg<-minmap1[which(minmap1$odds_ratio>1 & minmap1$p_value_adjusted<.05),]$pathway
+nseg<-minmap1[which(minmap1$odds_ratio<1 & minmap1$p_value_adjusted<.05),]$pathway
+
+total_sep<-length(unique(c(seo,seg)))
+total_nsep<-length(unique(c(nseo,nseg)))
+
+a=length(intersect(seo,seg))/total_sep
+b=length(setdiff(seo,seg))/total_sep
+c=length(setdiff(seg,seo))/total_sep
+
+d=length(intersect(nseo,nseg))/total_nsep
+e=length(setdiff(nseo,nseg))/total_nsep
+f=length(setdiff(nseg,nseo))/total_nsep
+
+enr<-data.frame(c(a,b,c),c(d,e,f))
+rownames(enr)<-c('enriched in oral and gut','enriched in oral','enriched in gut')
+enr$names<-rownames(enr)
+colnames(enr)<-c('Enriched in singletons','Enriched in non-singletons','names')
+
+enr<-melt(enr)
+
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/enrichment_of_function.pdf')
+ggplot(data=enr,aes(x=variable,y=value,fill=names))+geom_bar(stat='identity',position='dodge')+labs(title='Conservation of singleton and non-singleton function',fill='')+theme(axis.title.x=element_blank())+ylab('Fraction of all pathways identified')+theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1)
+dev.off()
+
+print(ggplot(data=enr,aes(x=variable,y=value,fill=names))+geom_bar(stat='identity',position='dodge')+labs(title='Conservation of singleton and non-singleton function',fill='')+theme(axis.title.x=element_blank())+ylab('Fraction of all pathways identified')+theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0,1))
+
+minmap$niche_pathway<-paste("oral", minmap$pathway, sep="_")
+minmap1$niche_pathway<-paste("gut", minmap1$pathway, sep="_")
+out<-rbind(minmap,minmap1)
+
+se=intersect(seo,seg)
+out_se<-out[out$pathway %in% se,]
+
+write.csv(out_se,'~/Dropbox (HMS)/orfletons/combined/se_both.csv')
+
+nse=intersect(nseo,nseg)
+out_nse<-out[out$pathway %in% nse,]
+
+write.csv(out_nse,'~/Dropbox (HMS)/orfletons/combined/nse_both.csv')
+
+foo=as.data.frame(nse)
+write.csv(foo,'~/Dropbox (HMS)/orfletons/combined/enriched_singletons.csv')
+```
+
+
+```{r}
+seg=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/seg_forplot.csv')
+nseg=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseg_forplot.csv')
+#nseg$odds_ratio<-1/nseg$log_odds_ratio
+#nseg$log_conf_lower<-1/nseg$log_conf_lower
+#nseg$log_conf_higher<-1/nseg$log_conf_higher
+
+seo=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/seo_forplot.csv')
+nseo=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseo_forplot.csv')
+#nseo$odds_ratio<-1/nseo$log_odds_ratio
+##nseo$log_conf_lower<-1/nseo$log_conf_lower
+#nseo$log_conf_higher<-1/nseo$log_conf_higher
+
+seg=seg[order(seg$odds_ratio,decreasing = T),]
+nseg=nseg[order(nseg$odds_ratio,decreasing = T),]
+seo=seo[order(seo$odds_ratio,decreasing = T),]
+nseo=nseo[order(nseo$odds_ratio,decreasing = T),]
+
+seo<-seo[rowSums(is.na(seo)) == 0,]
+nseo<-nseo[rowSums(is.na(nseo)) == 0,]
+seg<-seg[rowSums(is.na(seg)) == 0,]
+nseg<-nseg[rowSums(is.na(nseg)) == 0,]
+
+###plot top 25
+seo$names <- factor(seo$names, levels = rev(seo$names))
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/top_functions_seo.pdf')
+ggplot(data=seo,aes(x=names,y=odds_ratio))+geom_bar(stat='identity')+ylab('Odds Ratio')+ggtitle('Top 25 most enriched pathways for oral singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+
+nseo$names <- factor(nseo$names, levels = rev(nseo$names))
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/top_functions_nseo.pdf')
+ggplot(data=nseo,aes(x=names,y=odds_ratio))+geom_bar(stat='identity')+ylab('Odds Ratio')+ggtitle('Top 25 most enriched pathways for oral non-singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+
+seg$names <- factor(seg$names, levels = rev(seg$names))
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/top_functions_seg.pdf')
+ggplot(data=seg,aes(x=names,y=odds_ratio))+geom_bar(stat='identity')+ylab('Odds Ratio')+ggtitle('Top 25 most enriched pathways for gut singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+
+nseg$names <- factor(nseg$names, levels = rev(nseg$names))
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/top_functions_nseg.pdf')
+ggplot(data=nseg,aes(x=names,y=odds_ratio))+geom_bar(stat='identity')+ylab('Odds Ratio')+ggtitle('Top 25 most enriched pathways for gut non-singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=8))
+dev.off()
+###
+
+a<-ggplot(data=seo,aes(x=names,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched pathways for oral singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=10))+geom_errorbar(aes(x=names, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+b<-ggplot(data=nseo,aes(x=names,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched pathways for oral non-singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=10))+geom_errorbar(aes(x=names, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+c<-ggplot(data=seg,aes(x=names,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched pathways for gut singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=10))+geom_errorbar(aes(x=names, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+d<-ggplot(data=nseg,aes(x=names,y=log_odds_ratio))+geom_bar(stat='identity')+labs(y=expression(log[10](Odds~Ratio)))+ggtitle('Top 25 most enriched pathways for gut non-singletons')+coord_flip()+theme(axis.title.y=element_blank(),axis.text.y = element_text(size=10))+geom_errorbar(aes(x=names, ymin=log_conf_lower, ymax=log_conf_higher), color="black", width=0.5)
+
+ga <- ggplotGrob(a)
+gb <- ggplotGrob(b)
+gc <- ggplotGrob(c)
+gd <- ggplotGrob(d)
+
+both4<-align_plots(a,b,c,d,align = 'hv',axis = 'l')
+a<-ggdraw(both4[[1]])
+b<-ggdraw(both4[[2]])
+c<-ggdraw(both4[[3]])
+d<-ggdraw(both4[[4]])
+
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/top_functions_grid.pdf',height=15,width=25)
+grid.arrange(a, b, c, d ,nrow = 2)
+dev.off()
+```
+```{r}
+#intersect singleton non singleton top functions
+seg=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/seg_forintersection.csv')
+nseg=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseg_forintersection.csv')
+seo=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/seo_forintersection.csv')
+nseo=read.csv('~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseo_forintersection.csv')
+
+length(intersect(seo$names,seg$names))
+length(intersect(nseo$names,nseg$names))
+length(intersect(seo$names,nseg$names))
+length(intersect(seo$names,nseo$names))
+length(intersect(nseo$names,seg$names))
+length(intersect(nseg$names,seg$names))
+
+intersect(seo$names,seg$names)
+intersect(nseo$names,nseg$names)
+intersect(seo$names,nseg$names)
+intersect(seo$names,nseo$names)
+intersect(nseo$names,seg$names)
+intersect(nseg$names,seg$names)
+```
+
+
+```{r}
+#ECID FUNCTIONAL ANALYSIS
+ecidDict=read.csv('~/Dropbox (HMS)/orfletons/ecid_map.csv',sep=',',row.names=2,stringsAsFactors = F)
+ecidGoDict=read.csv('~/Dropbox (HMS)/orfletons/ecid_go_map',sep='\t',row.names=1,stringsAsFactors=F)
+
+fish<-function(count_sings,count_nonsings,total_sings,total_nonsings){
+  out<-fisher.test(matrix(c(count_sings,count_nonsings,total_sings,total_nonsings),nrow=2,ncol=2))
+  return(c(out$p.value,out$estimate,out$conf.int[1],out$conf.int[2]))
+} 
+
+######ORAL
+#ecid correlation, 50%
+setwd('~/Dropbox (HMS)/orfletons/oral')
+ecidmap<-read.csv('functional_annotations/gene_catalog_ecid_nton_counts_50perc.tsv',sep='\t')
+colnames(ecidmap)<-c('ecid','Non_Singleton_Counts','Singleton_Counts')
+ecidmap$Normalized_Non_Singleton_Counts<-ecidmap$Non_Singleton_Counts/sum(ecidmap$Non_Singleton_Counts)
+ecidmap$Normalized_Singleton_Counts<-ecidmap$Singleton_Counts/sum(ecidmap$Singleton_Counts)
+
+totalN=sum(ecidmap$Non_Singleton_Counts)
+totalS=sum(ecidmap$Singleton_Counts)
+
+output=matrix(nrow = nrow(ecidmap), ncol = 4)
+for (i in 1:nrow(ecidmap)){
+  output[i,]=fish(ecidmap[i,3],ecidmap[i,2],totalS,totalN)
+}
+
+ecidmap=cbind(ecidmap,output)
+
+######GUT
+#ecid correlation, 50%
+setwd('~/Dropbox (HMS)/orfletons/gut')
+ecidmap1<-read.csv('functional_annotations/gene_catalog_ecid_nton_counts_50perc.tsv',sep='\t')
+colnames(ecidmap1)<-c('ecid','Non_Singleton_Counts','Singleton_Counts')
+ecidmap1$Normalized_Non_Singleton_Counts<-ecidmap1$Non_Singleton_Counts/sum(ecidmap1$Non_Singleton_Counts)
+ecidmap1$Normalized_Singleton_Counts<-ecidmap1$Singleton_Counts/sum(ecidmap1$Singleton_Counts)
+
+totalN=sum(ecidmap1$Non_Singleton_Counts)
+totalS=sum(ecidmap1$Singleton_Counts)
+
+#PLOT ORAL AND GUT
+pdf('~/Dropbox (HMS)/orfletons/combined/functional_annotations/ecid_combined_50perc.pdf')
+ggplot() + geom_point(data=ecidmap, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='oral'))+geom_point(data=ecidmap1, aes(x=log(Normalized_Non_Singleton_Counts), y=log(Normalized_Singleton_Counts),color='gut')) +labs(title="Singletons and non-singletons, minpath, amino acids, 50% ID")+scale_x_continuous(limits = c(-20, 0))+scale_y_continuous(limits = c(-20, 0))+geom_abline(slope=1, intercept=0)+theme(legend.position="bottom")+theme(legend.title=element_blank())
+dev.off()
+
+output=matrix(nrow = nrow(ecidmap1), ncol = 4)
+for (i in 1:nrow(ecidmap1)){
+  output[i,]=fish(ecidmap1[i,3],ecidmap1[i,2],totalS,totalN)
+}
+
+ecidmap1=cbind(ecidmap1,output)
+
+########EXTRACT ENRICHMENT DATA
+colnames(ecidmap)[6:9]<-c('p_value','odds_ratio','conf_int_lower','conf_int_higher')
+colnames(ecidmap1)[6:9]<-c('p_value','odds_ratio','conf_int_lower','conf_int_higher')
+
+ecidmap$p_value_adjusted<-p.adjust(ecidmap$p_value,method='BY')
+ecidmap1$p_value_adjusted<-p.adjust(ecidmap1$p_value,method='BY')
+
+seo<-ecidmap[which(ecidmap1$odds_ratio<1 & ecidmap1$p_value_adjusted<.05),]
+seo<-seo[order(seo$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(seo), ncol = 1)
+foo2=matrix(nrow = nrow(seo), ncol = 1)
+for (i in 1:nrow(seo)){
+  foo[i]=ecidDict[seo$taxa[i],][2]
+  foo2[i]=ecidGoDict[seo$taxa[i],][1]
+}
+seo$names=foo
+seo$go_names=foo2
+
+
+nseo<-ecidmap[which(ecidmap$odds_ratio<1 & ecidmap$p_value_adjusted<.05),]
+nseo<-nseo[order(nseo$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(nseo), ncol = 1)
+foo2=matrix(nrow = nrow(nseo), ncol = 1)
+for (i in 1:nrow(nseo)){
+  foo[i]=ecidDict[seo$taxa[i],][2]
+  foo2[i]=ecidGoDict[seo$taxa[i],][1]
+}
+nseo$names=foo
+nseo$go_names=foo2
+
+seg<-ecidmap[which(ecidmap1$odds_ratio<1 & ecidmap1$p_value_adjusted<.05),]
+seg<-seg[order(seg$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(seg), ncol = 1)
+foo2=matrix(nrow = nrow(seg), ncol = 1)
+for (i in 1:nrow(seg)){
+  foo[i]=ecidDict[seg$taxa[i],][2]
+  foo2[i]=ecidGoDict[seg$taxa[i],][1]
+}
+seg$names=foo
+seg$go_names=foo2
+
+
+nseg<-ecidmap[which(ecidmap1$odds_ratio<1 & ecidmap1$p_value_adjusted<.05),]
+nseg<-nseg[order(nseg$p_value_adjusted,decreasing = F),]
+foo=matrix(nrow = nrow(nseg), ncol = 1)
+foo2=matrix(nrow = nrow(nseg), ncol = 1)
+for (i in 1:nrow(nseg)){
+  foo[i]=ecidDict[nseg$taxa[i],][2]
+  foo2[i]=ecidGoDict[nseg$taxa[i],][1]
+}
+nseg$names=foo
+nseg$go_names=foo2
+
+nseo$odds_ratio<-1/nseo$odds_ratio
+nseg$odds_ratio<-1/nseg$odds_ratio
+nseo$conf_int_lower<-1/nseo$conf_int_lower
+nseg$conf_int_lower<-1/nseg$conf_int_lower
+nseo$conf_int_higher<-1/nseo$conf_int_higher
+nseg$conf_int_higher<-1/nseg$conf_int_higher
+
+colnames(nseg)[8:9]<-c('conf_int_higher','conf_int_lower')
+colnames(nseo)[8:9]<-c('conf_int_higher','conf_int_lower')
+
+seo$log_odds_ratio<-log(seo$odds_ratio,10)
+nseo$log_odds_ratio<-log(nseo$odds_ratio,10)
+seg$log_odds_ratio<-log(seg$odds_ratio,10)
+nseg$log_odds_ratio<-log(nseg$odds_ratio,10)
+
+seo$log_conf_lower<-log(seo$conf_int_lower,10)
+nseo$log_conf_lower<-log(nseo$conf_int_lower,10)
+seg$log_conf_lower<-log(seg$conf_int_lower,10)
+nseg$log_conf_lower<-log(nseg$conf_int_lower,10)
+
+seo$log_conf_higher<-log(seo$conf_int_higher,10)
+nseo$log_conf_higher<-log(nseo$conf_int_higher,10)
+seg$log_conf_higher<-log(seg$conf_int_higher,10)
+nseg$log_conf_higher<-log(nseg$conf_int_higher,10)
+
+seo<-apply(seo,2,as.character)
+nseo<-apply(nseo,2,as.character)
+nseg<-apply(nseg,2,as.character)
+seg<-apply(seg,2,as.character)
+
+
+write.csv(seg,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/seg_ecid.csv')
+write.csv(nseg,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseg_ecid.csv')
+write.csv(seo,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/seo_ecid.csv')
+write.csv(nseo,'~/Dropbox (HMS)/orfletons/combined/functional_annotations/nseo_ecid.csv')
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+#get sorenson-dice correlations
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+
+dff1 <- read.csv("./sorensen_dice/gene_catalog_sd_50perc_forcor.csv",sep=',',row.names=1,header=T,check.names=FALSE)
+dff1=dff1[,order(colnames(dff1))]
+dff1=dff1[,order(colnames(dff1))]
+dff1[upper.tri(dff1,diag=F)]<-NA
+dff1=melt(dff1,na.rm=T)
+
+dff2 <- read.csv("./sorensen_dice/species_sorenson_forcor.csv",sep=',',row.names=1,header=T,check.names=FALSE)
+dff2=dff2[,order(colnames(dff2))]
+dff2[upper.tri(dff2,diag=F)]<-NA
+dff2=melt(dff2,na.rm=T)
+dff3 <- read.csv("./sorensen_dice/gene_catalog_sd_minpath_50_forcor.csv",sep=',',row.names=1,header=T,check.names=FALSE)
+dff3=dff3[2:nrow(dff3),2:ncol(dff3)]
+dff3=dff3[,order(colnames(dff3))]
+dff3[is.na(dff3)]<-.5
+dff3[upper.tri(dff3,diag=F)]<-NA
+dff3=melt(dff3,na.rm=T)
+
+cor(dff1[,2],dff2[,2])
+cor(dff2[,2],dff3[,2])
+cor(dff1[,2],dff3[,2])
+
+```
+
+```{r}
+#compare number of samples singletons vs similar non-singletons are coming from 
+
+setwd('~/Dropbox (HMS)/orfletons/gut/')
+d1<-read.csv('taxonomy_annotations/gene_catalog_contig_data_singleton_taxa_sample_mapping.csv')
+d2<-read.csv('taxonomy_annotations/gene_catalog_contig_data_non_singleton_taxa_sample_mapping.csv')
+d2<-d2[d2[,3]<=max(d1[,3]),]
+group <- rep("Gut singletons",nrow(d1))
+d1=cbind(d1,group)
+group <- rep("Gut non-singletons",nrow(d2))
+d2=cbind(d2,group)
+
+d5=rbind(d1,d2)
+
+colnames(d5)[4]<-'Sample_Count'
+
+d3=merge(d1,d2,by = 'X0')
+
+#compare number of samples singletons vs similar non-singletons are coming from 
+
+setwd('~/Dropbox (HMS)/orfletons/oral/')
+d1<-read.csv('taxonomy_annotations/gene_catalog_contig_data_singleton_taxa_sample_mapping.csv')
+d2<-read.csv('taxonomy_annotations/gene_catalog_contig_data_non_singleton_taxa_sample_mapping.csv')
+d2<-d2[d2[,3]<=max(d1[,3]),]
+group <- rep("Oral singletons",nrow(d1))
+d1=cbind(d1,group)
+group <- rep("Oral non-singletons",nrow(d2))
+d2=cbind(d2,group)
+
+d6=rbind(d1,d2)
+colnames(d6)[4]<-'Sample_Count'
+
+d5$body_site<-'oral'
+d6$body_site<-'gut'
+d=rbind(d5,d6)
+
+pdf('taxonomy_annotations/numSamComparison_s_ns.pdf',height=10,width=10)
+ggplot(d,aes(x=group, y=log(Sample_Count,10)))+ggtitle('Number of samples in which each taxonomic annotation occurs, gut') +ylab('ln(Number of samples)') + xlab('') +geom_boxplot(width=.5,outlier.shape=NA)+geom_jitter()+labs(y=expression(log[10](Sample~Count)))
+dev.off()
+
+pdf('taxonomy_annotations/numSamComparison_s_ns.pdf',height=10,width=10)
+ggplot(d,aes(x=group, y=log(Sample_Count,10)))+ggtitle('Number of samples in which each taxonomic annotation occurs, gut') +ylab('ln(Number of samples)') + xlab('') +geom_boxplot(width=.5,outlier.shape=NA)+geom_jitter()+stat_compare_means()+labs(y=expression(log[10](Sample~Count)))
+dev.off()
+
+pdf('~/Dropbox (HMS)/orfletons/revisions/figures/numSamComparison_s_ns_both.pdf',height=10,width=10)
+ggplot(d,aes(x=group, y=log(Sample_Count,10)))+ggtitle('Number of samples in which each taxonomic annotation occurs, gut') +ylab('ln(Number of samples)') + xlab('') +geom_boxplot(width=.5,outlier.shape=NA)+geom_jitter()+labs(y=expression(log[10](Sample~Count)))
+dev.off()
+
+d4=merge(d1,d2,by = 'X0')
+
+d3$body_site<-'gut'
+d4$body_site<-'oral'
+
+d=rbind(d3,d4)
+
+foo=max(d$X2.y)
+
+pdf('~/Dropbox (HMS)/orfletons/revisions/figures/numSamComparison_s_ns.pdf_method2.pdf',height=10,width=10)
+ggplot(d, aes(x=X2.x, y=X2.y,color=body_site)) + geom_point() +labs(title="Number of samples in which each taxonomic annotation occurs")+ scale_x_continuous(name='Number of individuals, singleton contigs',limits=c(0,foo))+ scale_y_continuous(name='Number of samples, non-singleton contigs',limits=c(0,foo))+geom_abline(slope=1, intercept=0)
+dev.off()
+
+ggplot(d, aes(x=X2.x, y=X2.y,color=body_site)) + geom_point() +labs(title="Number of samples in which each taxonomic annotation occurs")+ scale_x_continuous(name='Number of individuals, singleton contigs',limits=c(0,foo))+ scale_y_continuous(name='Number of samples, non-singleton contigs',limits=c(0,foo))+geom_abline(slope=1, intercept=0)
+
+write.csv(d4,'~/Dropbox (HMS)/orfletons/revisions/sample_mapping_oral_gut.csv')
+
+```
+```{r}
+#generate f5 heatmap
+library(pheatmap)
+
+setwd('~/Dropbox (HMS)/orfletons/revisions/figures/')
+
+d=read.csv('heatmap_for_f5.csv')
+
+pdf('fingerprinting_with_singleton_strains.pdf',width=30,height=15)
+pheatmap(d,cluster_rows = F, gaps_row = c(2,4,6,8,10,12,14), legend = F, fontsize_col =  3, cellwidth = 3, cellheight = 10,annotation_names_col = F,show_colnames = F)
+dev.off()
+
+
+
+```
+
+
+
+
+
+
