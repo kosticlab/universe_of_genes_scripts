@@ -35,4 +35,4 @@ First step in removing short genes (below 100bp) from CD-HIT .clstr file.
 Second step in removing short genes (below 100bp) from CD-HIT .clstr file.
 
 #### sorensen.cpp
-Sorenson-Dice distance calculation for all genes in a binary abundance matrix. Needs to be compiled with openmp first. (g++ -fopenmp sorensen.cpp)
+Sorenson-Dice distance calculation for all genes in a binary abundance matrix. Needs to be compiled with openmp before initial usage.
